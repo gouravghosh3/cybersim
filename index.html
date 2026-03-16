@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Operation: CyberShield - JP Morgan SOC Analyst Competition">
+    <title>Operation: CyberShield | SOC Analyst Competition</title>
+    <link rel="stylesheet" href="styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Registration Overlay -->
+    <div class="registration-overlay" id="registration-overlay">
+        <div class="reg-container">
+            <div class="reg-header">
+                <div class="reg-shield-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="M9 12l2 2 4-4" />
+                    </svg>
+                </div>
+                <h1 class="reg-title">Operation: CyberShield</h1>
+                <p class="reg-subtitle">JP Morgan SOC Analyst Competition</p>
+            </div>
+
+            <div id="reg-form-section" class="reg-form-section">
+                <div class="reg-field" id="reg-employee-field">
+                    <label class="reg-label">Employee ID</label>
+                    <div class="reg-input-wrapper">
+                        <input type="text" id="reg-employee-id" class="reg-input" placeholder="Enter your employee ID" autocomplete="off" />
+                        <span class="reg-auto-badge" id="reg-auto-detect-badge" style="display:none;">AUTO-DETECTED</span>
+                    </div>
+                </div>
+                <div class="reg-field">
+                    <label class="reg-label">Display Name</label>
+                    <input type="text" id="reg-display-name" class="reg-input" placeholder="Your full name" autocomplete="off" />
+                </div>
+                <div class="reg-field">
+                    <label class="reg-label">Hacker Alias <span style="color: var(--text-muted); font-weight: 400;">(shown on leaderboard)</span></label>
+                    <input type="text" id="reg-alias" class="reg-input" placeholder="e.g. CyberPhantom, N3tHunter" autocomplete="off" />
+                </div>
+                <div class="reg-error" id="reg-error" style="display: none;"></div>
+                <button class="btn btn-primary reg-submit" id="reg-submit-btn" onclick="CompetitionManager.handleRegistration()">
+                    Enter the Operation
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="reg-resume-section" class="reg-resume-section" style="display: none;">
+                <div class="resume-card">
+                    <h3>Welcome back, <span id="resume-player-name"></span>!</h3>
+                    <div class="resume-stats">
+                        <div class="resume-stat">
+                            <span class="resume-stat-value" id="resume-score">0</span>
+                            <span class="resume-stat-label">Score</span>
+                        </div>
+                        <div class="resume-stat">
+                            <span class="resume-stat-value" id="resume-completed">0/6</span>
+                            <span class="resume-stat-label">Completed</span>
+                        </div>
+                    </div>
+                    <div class="resume-actions">
+                        <button class="btn btn-primary" onclick="CompetitionManager.resumeGame()">
+                            Resume Operation
+                        </button>
+                        <button class="btn btn-outline" onclick="CompetitionManager.freshStart()">
+                            Start Fresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time's Up Overlay -->
+    <div class="times-up-overlay" id="times-up-overlay">
+        <div class="times-up-content">
+            <div class="times-up-icon">⏱️</div>
+            <h1 class="times-up-title">TIME'S UP</h1>
+            <p class="times-up-subtitle">Operation: CyberShield has concluded</p>
+            <div class="times-up-stats">
+                <div class="times-up-stat">
+                    <span class="times-up-stat-label">Agent</span>
+                    <span class="times-up-stat-value" id="final-alias-value">—</span>
+                </div>
+                <div class="times-up-stat">
+                    <span class="times-up-stat-label">Final Score</span>
+                    <span class="times-up-stat-value" id="final-score-value">0</span>
+                </div>
+                <div class="times-up-stat">
+                    <span class="times-up-stat-label">Missions Completed</span>
+                    <span class="times-up-stat-value" id="final-completed-value">0/6</span>
+                </div>
+            </div>
+            <p class="times-up-note">Check the live leaderboard for final standings</p>
+            <button class="btn btn-primary" onclick="generateTakeawayCard()" style="margin-top: 20px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                View Proficiency Card
+            </button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Animated Background -->
+        <div class="cyber-grid"></div>
+        <div class="scan-line"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="M9 12l2 2 4-4" />
+                    </svg>
+                </div>
+                <span class="logo-text">CyberShield</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-view="simulations">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    <span>Simulations</span>
+                </a>
+                <a href="#" class="nav-item" data-view="progress">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="20" x2="12" y2="10" />
+                        <line x1="18" y1="20" x2="18" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="16" />
+                    </svg>
+                    <span>Progress</span>
+                </a>
+                <a href="leaderboard.html" class="nav-item" target="_blank">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7" />
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7" />
+                        <path d="M4 22h16" />
+                        <path d="M10 22V2h4v20" />
+                        <path d="M10 14H7v8" />
+                        <path d="M14 14h3v8" />
+                    </svg>
+                    <span>Leaderboard</span>
+                </a>
+            </nav>
+
+            <div class="user-stats">
+                <div class="stat-card">
+                    <span class="stat-label">Total Score</span>
+                    <span class="stat-value" id="total-score">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Completed</span>
+                    <span class="stat-value" id="completed-count">0/4</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1 id="view-title">Dashboard</h1>
+                    <p class="header-subtitle">Operation: CyberShield — SOC Analyst Competition</p>
+                </div>
+                <div class="header-actions">
+                    <div class="competition-timer" id="competition-timer" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span id="competition-timer-value">60:00</span>
+                    </div>
+                    <button class="btn btn-outline" id="reset-progress">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 4v6h6" />
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                        </svg>
+                        Reset Progress
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section class="view active" id="dashboard-view">
+                <div class="welcome-banner">
+                    <div class="welcome-content">
+                        <h2>Welcome, Analyst</h2>
+                        <p>The clock is ticking. Complete as many missions as you can to earn the highest score.
+                            Top 3 analysts will be rewarded. Top 10 will be recognized. Good luck.</p>
+                        <button class="btn btn-primary" onclick="showView('simulations')">
+                            Begin Missions
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="welcome-visual">
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span class="terminal-dot red"></span>
+                                <span class="terminal-dot yellow"></span>
+                                <span class="terminal-dot green"></span>
+                            </div>
+                            <div class="terminal-body">
+                                <div class="terminal-line">
+                                    <span class="prompt">$</span>
+                                    <span class="typing">./initialize_training.sh</span>
+                                </div>
+                                <div class="terminal-line output">
+                                    <span>[✓] Loading threat databases...</span>
+                                </div>
+                                <div class="terminal-line output">
+                                    <span>[✓] Simulation environment ready</span>
+                                </div>
+                                <div class="terminal-line output success">
+                                    <span>[!] Awaiting analyst input...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-stats">
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon cyan">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value">6</span>
+                            <span class="quick-stat-label">Missions</span>
+                        </div>
+                    </div>
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon purple">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value" id="time-spent">0m</span>
+                            <span class="quick-stat-label">Time Invested</span>
+                        </div>
+                    </div>
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon green">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value" id="accuracy-rate">0%</span>
+                            <span class="quick-stat-label">Accuracy</span>
+                        </div>
+                    </div>
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon orange">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <span class="quick-stat-value" id="rank-level">Novice</span>
+                            <span class="quick-stat-label">Rank</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Simulations View -->
+            <section class="view" id="simulations-view">
+                <div class="simulations-grid">
+                    <!-- Log Analysis Card -->
+                    <div class="simulation-card" data-simulation="log-analysis">
+                        <div class="card-glow cyan"></div>
+                        <div class="card-header">
+                            <div class="card-icon cyan">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                    <line x1="10" y1="9" x2="8" y2="9" />
+                                </svg>
+                            </div>
+                            <span class="difficulty-badge medium">Medium</span>
+                        </div>
+                        <h3 class="card-title">Log Analysis</h3>
+                        <p class="card-description">Analyze SIEM logs to identify suspicious authentication failures and
+                            privilege escalation attempts.</p>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                15-20 min
+                            </span>
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                500-600 pts
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="log-analysis-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <!-- Mode Selection Buttons -->
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <button class="btn btn-card" onclick="startSimulation('log-analysis')"
+                                style="flex: 1; font-size: 0.85rem;">
+                                📋 Log Review
+                            </button>
+                            <button class="btn btn-card" onclick="startSimulation('splunk-query')"
+                                style="flex: 1; font-size: 0.85rem; background: rgba(178, 77, 255, 0.1); color: var(--purple); border-color: rgba(178, 77, 255, 0.3);">
+                                🔍 Splunk Query
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Phishing Detection Card -->
+                    <div class="simulation-card" data-simulation="phishing">
+                        <div class="card-glow purple"></div>
+                        <div class="card-header">
+                            <div class="card-icon purple">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                    <polyline points="22,6 12,13 2,6" />
+                                </svg>
+                            </div>
+                            <span class="difficulty-badge easy">Easy</span>
+                        </div>
+                        <h3 class="card-title">Phishing Detection</h3>
+                        <p class="card-description">Review suspicious emails and identify phishing attempts by analyzing
+                            headers, links, and content.</p>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                10-15 min
+                            </span>
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                300 pts
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="phishing-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <button class="btn btn-card" onclick="startSimulation('phishing')">Start Simulation</button>
+                    </div>
+
+                    <!-- Incident Response Card -->
+                    <div class="simulation-card" data-simulation="incident-response">
+                        <div class="card-glow orange"></div>
+                        <div class="card-header">
+                            <div class="card-icon orange">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                    <line x1="12" y1="9" x2="12" y2="13" />
+                                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                                </svg>
+                            </div>
+                            <span class="difficulty-badge hard">Hard</span>
+                        </div>
+                        <h3 class="card-title">Incident Response</h3>
+                        <p class="card-description">Handle a live security incident by choosing the correct response
+                            actions in the right order.</p>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                20-30 min
+                            </span>
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                750 pts
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="incident-response-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <button class="btn btn-card" onclick="startSimulation('incident-response')">Start
+                            Simulation</button>
+                    </div>
+
+                    <!-- Network Analysis Card -->
+                    <div class="simulation-card" data-simulation="network-analysis">
+                        <div class="card-glow green"></div>
+                        <div class="card-header">
+                            <div class="card-icon green">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                                </svg>
+                            </div>
+                            <span class="difficulty-badge medium">Medium</span>
+                        </div>
+                        <h3 class="card-title">Network Traffic Analysis</h3>
+                        <p class="card-description">Examine packet captures to identify C2 beacons, data exfiltration,
+                            and suspicious network behavior.</p>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                15-25 min
+                            </span>
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                600 pts
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="network-analysis-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <button class="btn btn-card" onclick="startSimulation('network-analysis')">Start
+                            Simulation</button>
+                    </div>
+
+                    <!-- Threat Hunting Card -->
+                    <div class="simulation-card" data-simulation="threat-hunting">
+                        <div class="card-glow"
+                            style="background: radial-gradient(circle at 50% 50%, rgba(255, 107, 53, 0.15), transparent 70%);">
+                        </div>
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(255, 107, 53, 0.1); color: #ff6b35;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.35-4.35" />
+                                    <circle cx="11" cy="11" r="3" />
+                                </svg>
+                            </div>
+                            <span class="difficulty-badge hard">Advanced</span>
+                        </div>
+                        <h3 class="card-title">Threat Hunting: Clustering</h3>
+                        <p class="card-description">Analyze data clusters to find the "cluster of one" - the outlier
+                            that indicates malicious activity hidden among normal behavior.</p>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                25-35 min
+                            </span>
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                800 pts
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="threat-hunting-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <button class="btn btn-card" onclick="startSimulation('threat-hunting')"
+                            style="background: rgba(255, 107, 53, 0.1); color: #ff6b35; border-color: rgba(255, 107, 53, 0.3);">Start
+                            Threat Hunt</button>
+                    </div>
+
+                    <!-- Threat Stacking Card -->
+                    <div class="simulation-card" data-simulation="threat-stacking">
+                        <div class="card-glow"
+                            style="background: radial-gradient(circle at 50% 50%, rgba(255, 56, 96, 0.15), transparent 70%);">
+                        </div>
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(255, 56, 96, 0.1); color: var(--red);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="20" x2="12" y2="10" />
+                                    <line x1="18" y1="20" x2="18" y2="4" />
+                                    <line x1="6" y1="20" x2="6" y2="16" />
+                                </svg>
+                            </div>
+                            <span class="difficulty-badge hard">Advanced</span>
+                        </div>
+                        <h3 class="card-title">Threat Hunting: Stacking</h3>
+                        <p class="card-description">Sort data by frequency to find outliers. The most common items are
+                            noise; the least common hide the attackers.</p>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                25-35 min
+                            </span>
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                800 pts
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="threat-stacking-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <button class="btn btn-card" onclick="startSimulation('threat-stacking')"
+                            style="background: rgba(255, 56, 96, 0.1); color: var(--red); border-color: rgba(255, 56, 96, 0.3);">Start
+                            Stacking</button>
+                    </div>
+
+                    <!-- Quick-Fire Bonus Round Card -->
+                    <div class="simulation-card" data-simulation="quickfire">
+                        <div class="card-glow"
+                            style="background: radial-gradient(circle at 50% 50%, rgba(255, 217, 61, 0.15), transparent 70%);">
+                        </div>
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(255, 217, 61, 0.1); color: var(--yellow);">
+                                <span style="font-size:1.2rem; font-weight:bold;">⚡</span>
+                            </div>
+                            <span class="difficulty-badge" style="background: rgba(255, 217, 61, 0.15); color: var(--yellow); border-color: rgba(255, 217, 61, 0.3);">Bonus</span>
+                        </div>
+                        <h3 class="card-title">Quick-Fire Round</h3>
+                        <p class="card-description">15 rapid fire questions to test your core cybersecurity knowledge. You have 6 seconds per question.</p>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                90 seconds
+                            </span>
+                            <span class="meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                200 pts
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="quickfire-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <button class="btn btn-card" onclick="startSimulation('quickfire')"
+                            style="background: rgba(255, 217, 61, 0.1); color: var(--yellow); border-color: rgba(255, 217, 61, 0.3);">Start Quick-Fire</button>
+                    </div>
+
+                    <!-- Mystery Bonus Challenge Card (Hidden initially) -->
+                    <div class="simulation-card" id="mystery-challenge-card" data-simulation="mystery-challenge" style="display: none; border: 1px solid var(--red);">
+                        <div class="card-glow"
+                            style="background: radial-gradient(circle at 50% 50%, rgba(255, 56, 96, 0.2), transparent 70%);">
+                        </div>
+                        <div class="card-header">
+                            <div class="card-icon" style="background: rgba(255, 56, 96, 0.15); color: var(--red); box-shadow: 0 0 15px rgba(255,56,96,0.5);">
+                                🚨
+                            </div>
+                            <span class="difficulty-badge hard" style="animation: timerPulse 1s infinite;">CRITICAL</span>
+                        </div>
+                        <h3 class="card-title" style="color: var(--red);">LIVE BREACH RESPONSE</h3>
+                        <p class="card-description">EMERGENCY PROTOCOL ACTIVATED. Triage 10 incoming SOC alerts in rapid succession. 15 seconds per alert.</p>
+                        <div class="card-meta">
+                            <span class="meta-item" style="color: var(--red);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                2.5 min
+                            </span>
+                            <span class="meta-item" style="color: var(--red);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                400 pts (2x)
+                            </span>
+                        </div>
+                        <div class="card-progress">
+                            <div class="progress-bar" style="background: rgba(255,56,96,0.1);">
+                                <div class="progress-fill" id="mystery-challenge-progress" style="width: 0%; background: var(--red);"></div>
+                            </div>
+                            <span class="progress-text">Not Started</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="startSimulation('mystery-challenge')"
+                            style="background: var(--red); border-color: var(--red); color: white;">RESPOND NOW</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress View -->
+            <section class="view" id="progress-view">
+                <div class="progress-overview">
+                    <div class="progress-charts-wrapper" style="display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;">
+                        <div class="progress-chart-container">
+                            <div class="progress-ring">
+                                <svg viewBox="0 0 100 100">
+                                    <circle class="progress-ring-bg" cx="50" cy="50" r="45" />
+                                    <circle class="progress-ring-fill" cx="50" cy="50" r="45" id="overall-progress-ring" />
+                                </svg>
+                                <div class="progress-ring-text">
+                                    <span class="progress-percentage" id="overall-percentage">0%</span>
+                                    <span class="progress-label">Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="radar-chart-container" id="radar-chart-container" style="width: 250px; height: 250px; display: flex; align-items: center; justify-content: center;">
+                            <!-- SVG Radar Chart rendered by JS -->
+                        </div>
+                    </div>
+                    <div class="progress-details">
+                        <h3>Your Progress</h3>
+                        <div class="progress-list" id="progress-list">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="achievements-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Achievements</h3>
+                        <button class="btn btn-outline" onclick="generateTakeawayCard()" id="btn-download-cert" style="display: none; font-size: 0.9rem; padding: 8px 16px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            View Proficiency Card
+                        </button>
+                    </div>
+                    <div class="achievements-grid" id="achievements-grid">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Simulation View (Hidden by default) -->
+            <section class="view" id="simulation-view">
+                <div class="simulation-container" id="simulation-container">
+                    <!-- Dynamically loaded simulation content -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Mini Leaderboard Panel -->
+        <div class="mini-leaderboard" id="mini-leaderboard">
+            <div class="mini-lb-header" onclick="CompetitionManager.toggleMiniLeaderboard()">
+                <span class="mini-lb-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <line x1="12" y1="20" x2="12" y2="10"></line>
+                        <line x1="18" y1="20" x2="18" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="16"></line>
+                    </svg>
+                    Leaderboard
+                </span>
+                <span class="mini-lb-meta">
+                    <span id="mini-lb-my-rank">--</span>
+                    <span class="mini-lb-sep">·</span>
+                    <span id="mini-lb-player-count">0 analysts</span>
+                </span>
+            </div>
+            <div class="mini-lb-body">
+                <div class="mini-lb-list" id="mini-leaderboard-list">
+                    <!-- Populated by CompetitionManager -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Results -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="results-modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Mission Complete</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">Close</button>
+                <button class="btn btn-primary" id="modal-action">View Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="db.js"></script>
+    <script src="simulations/log-analysis.js"></script>
+    <script src="simulations/splunk-query.js"></script>
+    <script src="simulations/phishing-detection.js"></script>
+    <script src="simulations/incident-response.js"></script>
+    <script src="simulations/network-analysis.js"></script>
+    <script src="simulations/threat-hunting.js"></script>
+    <script src="simulations/threat-stacking.js"></script>
+    <script src="simulations/mystery-challenge.js"></script>
+    <script src="simulations/quickfire.js"></script>
+    <script src="registration.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

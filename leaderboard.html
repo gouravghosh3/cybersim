@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Operation: CyberShield - Live Leaderboard">
+    <title>Operation: CyberShield | Live Leaderboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(20, 20, 30, 0.8);
+            --bg-tertiary: rgba(30, 30, 45, 0.6);
+            --cyan: #00f5ff;
+            --cyan-glow: rgba(0, 245, 255, 0.3);
+            --purple: #b24dff;
+            --green: #00ff88;
+            --orange: #ff6b35;
+            --red: #ff3860;
+            --yellow: #ffd93d;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --text-muted: #6a6a80;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --font-display: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            overflow: hidden;
+            height: 100vh;
+            background-image:
+                linear-gradient(rgba(0, 245, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 245, 255, 0.015) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Scan line effect */
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: 0.3;
+            animation: scanMove 4s linear infinite;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        @keyframes scanMove {
+            0% { top: -4px; }
+            100% { top: 100vh; }
+        }
+
+        .lb-wrapper {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 60px;
+        }
+
+        /* Header */
+        .lb-header {
+            text-align: center;
+            margin-bottom: 40px;
+            flex-shrink: 0;
+        }
+
+        .lb-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .lb-logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px var(--cyan-glow);
+        }
+
+        .lb-logo-icon svg {
+            width: 28px;
+            height: 28px;
+            color: white;
+        }
+
+        .lb-title {
+            font-family: var(--font-display);
+            font-size: 2.4rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .lb-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 4px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .lb-meta {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 16px;
+        }
+
+        .lb-meta-item {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .lb-meta-value {
+            color: var(--cyan);
+            font-weight: 700;
+            font-family: var(--font-display);
+        }
+
+        /* Main content */
+        .lb-content {
+            flex: 1;
+            display: flex;
+            gap: 32px;
+            min-height: 0;
+        }
+
+        /* Top 3 Podium */
+        .lb-podium {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 20px;
+            width: 420px;
+            flex-shrink: 0;
+            padding-bottom: 40px;
+        }
+
+        .podium-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            width: 130px;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+
+        .podium-card.gold {
+            border-color: rgba(255, 215, 0, 0.4);
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.15);
+            transform: translateY(-30px);
+        }
+
+        .podium-card.silver {
+            border-color: rgba(192, 192, 192, 0.3);
+            box-shadow: 0 0 30px rgba(192, 192, 192, 0.1);
+        }
+
+        .podium-card.bronze {
+            border-color: rgba(205, 127, 50, 0.3);
+            box-shadow: 0 0 30px rgba(205, 127, 50, 0.1);
+        }
+
+        .podium-rank {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .podium-alias {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .podium-score {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+
+        .podium-card.gold .podium-score { color: var(--gold); }
+        .podium-card.silver .podium-score { color: var(--silver); }
+        .podium-card.bronze .podium-score { color: var(--bronze); }
+
+        .podium-completed {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .podium-card.empty {
+            opacity: 0.3;
+            border-style: dashed;
+        }
+
+        /* Rankings Table */
+        .lb-rankings {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .lb-rankings-title {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            padding-left: 4px;
+            flex-shrink: 0;
+        }
+
+        .lb-table-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 120px 100px;
+            padding: 10px 16px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .lb-table-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .lb-table-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .lb-table-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .lb-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 120px 100px;
+            padding: 14px 16px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.5s ease;
+            animation: rowSlideIn 0.4s ease;
+        }
+
+        @keyframes rowSlideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .lb-row:hover {
+            background: rgba(0, 245, 255, 0.03);
+        }
+
+        .lb-row.top-10 {
+            background: rgba(0, 245, 255, 0.05);
+            border-left: 3px solid var(--cyan);
+        }
+
+        .lb-row-rank {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .lb-row-player {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lb-row-alias {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .lb-row-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .lb-row-score {
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--cyan);
+            font-size: 1.1rem;
+        }
+
+        .lb-row-completed {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Activity Feed */
+        .lb-feed {
+            margin-top: 20px;
+            flex-shrink: 0;
+            padding: 12px 0;
+            border-top: 1px solid var(--border-color);
+            overflow: hidden;
+            height: 36px;
+        }
+
+        .lb-feed-track {
+            display: flex;
+            gap: 60px;
+            animation: feedScroll 30s linear infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes feedScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .lb-feed-item {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .lb-feed-item .feed-alias {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        /* No players state */
+        .lb-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .lb-empty-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+
+        .lb-empty-text {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .lb-empty-sub {
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Pulse dot for live indicator */
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            display: inline-block;
+            animation: livePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--green); }
+            50% { opacity: 0.5; box-shadow: 0 0 12px var(--green); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scan-line"></div>
+
+    <div class="lb-wrapper">
+        <header class="lb-header">
+            <div class="lb-logo">
+                <div class="lb-logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="M9 12l2 2 4-4" />
+                    </svg>
+                </div>
+                <h1 class="lb-title">Operation: CyberShield</h1>
+            </div>
+            <p class="lb-subtitle">
+                <span class="live-dot"></span>&nbsp;&nbsp;Live Leaderboard
+            </p>
+            <div class="lb-meta">
+                <span class="lb-meta-item">Analysts Online: <span class="lb-meta-value" id="total-players">0</span></span>
+                <span class="lb-meta-item">Highest Score: <span class="lb-meta-value" id="top-score">0</span></span>
+                <span class="lb-meta-item">Last Updated: <span class="lb-meta-value" id="last-updated">--:--</span></span>
+            </div>
+        </header>
+
+        <div class="lb-content" id="lb-content">
+            <!-- Podium -->
+            <div class="lb-podium" id="lb-podium">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Rankings -->
+            <div class="lb-rankings">
+                <div class="lb-rankings-title">ALL ANALYSTS</div>
+                <div class="lb-table-header">
+                    <span>Rank</span>
+                    <span>Agent</span>
+                    <span>Score</span>
+                    <span>Missions</span>
+                </div>
+                <div class="lb-table-body" id="lb-table-body">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="lb-feed" id="lb-feed">
+            <div class="lb-feed-track" id="lb-feed-track">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="db.js"></script>
+    <script>
+        // ============================================
+        // Leaderboard Controller
+        // ============================================
+        const POLL_INTERVAL = 5000; // 5 seconds
+        let previousPlayers = [];
+        let activityLog = [];
+
+        async function init() {
+            GameDB.init();
+            await updateLeaderboard();
+            setInterval(updateLeaderboard, POLL_INTERVAL);
+        }
+
+        async function updateLeaderboard() {
+            try {
+                const players = await GameDB.getAllPlayers();
+                detectActivity(players);
+                renderPodium(players);
+                renderTable(players);
+                renderFeed();
+                updateMeta(players);
+                previousPlayers = JSON.parse(JSON.stringify(players));
+            } catch (error) {
+                console.error('[Leaderboard] Update failed:', error);
+            }
+        }
+
+        function detectActivity(currentPlayers) {
+            if (previousPlayers.length === 0) return;
+
+            currentPlayers.forEach(player => {
+                const prev = previousPlayers.find(p => p.employeeId === player.employeeId);
+                if (!prev) {
+                    activityLog.unshift({
+                        type: 'join',
+                        alias: player.alias || player.displayName,
+                        text: 'joined the operation',
+                        time: Date.now()
+                    });
+                } else if (player.totalScore > prev.totalScore) {
+                    // Find which simulation was just completed
+                    const sims = Object.entries(player.progress || {});
+                    for (const [simId, simData] of sims) {
+                        const prevSim = prev.progress?.[simId];
+                        if (simData.completed && (!prevSim || !prevSim.completed)) {
+                            const simNames = {
+                                'log-analysis': 'Log Analysis',
+                                'phishing': 'Phishing Detection',
+                                'incident-response': 'Incident Response',
+                                'network-analysis': 'Network Analysis',
+                                'threat-hunting': 'Threat Hunting',
+                                'threat-stacking': 'Threat Stacking'
+                            };
+                            activityLog.unshift({
+                                type: 'complete',
+                                alias: player.alias || player.displayName,
+                                text: `completed ${simNames[simId] || simId} (${simData.score} pts)`,
+                                time: Date.now()
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Keep only last 20 items
+            activityLog = activityLog.slice(0, 20);
+        }
+
+        function renderPodium(players) {
+            const podium = document.getElementById('lb-podium');
+            const top3 = players.slice(0, 3);
+            const medals = [
+                { class: 'silver', emoji: '🥈', order: 0 },
+                { class: 'gold', emoji: '🥇', order: 1 },
+                { class: 'bronze', emoji: '🥉', order: 2 }
+            ];
+
+            // Display order: Silver (2nd), Gold (1st), Bronze (3rd)
+            const displayOrder = [1, 0, 2]; // indices into top3
+
+            podium.innerHTML = displayOrder.map((playerIdx, displayIdx) => {
+                const player = top3[playerIdx];
+                const medal = medals[displayIdx];
+
+                if (!player) {
+                    return `
+                        <div class="podium-card ${medal.class} empty">
+                            <div class="podium-rank">${medal.emoji}</div>
+                            <div class="podium-alias">—</div>
+                            <div class="podium-score">0</div>
+                            <div class="podium-completed">Waiting...</div>
+                        </div>
+                    `;
+                }
+
+                const completed = Object.values(player.progress || {}).filter(p => p.completed).length;
+
+                return `
+                    <div class="podium-card ${medal.class}">
+                        <div class="podium-rank">${medal.emoji}</div>
+                        <div class="podium-alias">${player.alias || player.displayName || 'Anonymous'}</div>
+                        <div class="podium-score">${player.totalScore.toLocaleString()}</div>
+                        <div class="podium-completed">${completed}/6 missions</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTable(players) {
+            const tbody = document.getElementById('lb-table-body');
+
+            if (players.length === 0) {
+                tbody.innerHTML = `
+                    <div class="lb-empty">
+                        <div class="lb-empty-icon">🛡️</div>
+                        <div class="lb-empty-text">AWAITING ANALYSTS</div>
+                        <div class="lb-empty-sub">Players will appear here once they register</div>
+                    </div>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = players.map((player, index) => {
+                const rank = index + 1;
+                const completed = Object.values(player.progress || {}).filter(p => p.completed).length;
+                const isTop10 = rank <= 10;
+
+                return `
+                    <div class="lb-row ${isTop10 ? 'top-10' : ''}" style="animation-delay: ${index * 0.05}s">
+                        <span class="lb-row-rank">#${rank}</span>
+                        <div class="lb-row-player">
+                            <span class="lb-row-alias">${player.alias || player.displayName || 'Anonymous'}</span>
+                            <span class="lb-row-name">${player.displayName || ''}</span>
+                        </div>
+                        <span class="lb-row-score">${player.totalScore.toLocaleString()}</span>
+                        <span class="lb-row-completed">${completed}/6</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderFeed() {
+            const track = document.getElementById('lb-feed-track');
+            if (activityLog.length === 0) {
+                track.innerHTML = `
+                    <span class="lb-feed-item">🛡️ Operation: CyberShield is live — waiting for analyst activity...</span>
+                `;
+                return;
+            }
+
+            const icons = { join: '🔐', complete: '✅' };
+            // Duplicate for seamless scroll
+            const items = [...activityLog, ...activityLog];
+            track.innerHTML = items.map(item => `
+                <span class="lb-feed-item">
+                    ${icons[item.type] || '📡'}
+                    <span class="feed-alias">${item.alias}</span>
+                    ${item.text}
+                </span>
+            `).join('');
+        }
+
+        function updateMeta(players) {
+            document.getElementById('total-players').textContent = players.length;
+            document.getElementById('top-score').textContent = players.length > 0
+                ? players[0].totalScore.toLocaleString()
+                : '0';
+            const now = new Date();
+            document.getElementById('last-updated').textContent =
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>
